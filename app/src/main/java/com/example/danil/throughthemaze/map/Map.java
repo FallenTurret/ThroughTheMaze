@@ -19,12 +19,6 @@ public class Map {
         }
     }
 
-    public Map(int size, Vertex[] vertexes, ArrayList<LinkedList<Integer>> edges) {
-        this.size = size;
-        this.vertexes = vertexes;
-        this.edges = edges;
-    }
-
     public void generate() {
         while (true) {
             generateVertexes();
