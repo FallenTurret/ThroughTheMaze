@@ -3,17 +3,26 @@ package com.example.danil.throughthemaze.map;
 import java.util.*;
 
 public class Map {
-    public static final double VERTEX_RADIUS = 1;
-    public static final double CORRIDOR_WIDTH = VERTEX_RADIUS / 2;
-    public static final double BORDER = 100;
-    private int size;
-    private Vertex[] vertexes;
-    private ArrayList<LinkedList<Integer>> edges;
+    private static final double VERTEX_RADIUS = 1;
+    private static final double CORRIDOR_WIDTH = VERTEX_RADIUS / 2;
+    private static final double BORDER = 1000;
+    public int size;
+    public Vertex[] vertexes;
+    public ArrayList<LinkedList<Integer>> edges;
 
     public Map(int size) {
         this.size = size;
         vertexes = new Vertex[size];
-        edges = new ArrayList<>(size);
+        edges = new ArrayList<>();
+        for (int i = 0; i < size; i++) {
+            edges.add(new LinkedList<Integer>());
+        }
+    }
+
+    public Map(int size, Vertex[] vertexes, ArrayList<LinkedList<Integer>> edges) {
+        this.size = size;
+        this.vertexes = vertexes;
+        this.edges = edges;
     }
 
     public void generate() {
@@ -51,15 +60,7 @@ public class Map {
 
     private boolean intersects(Vertex a, Vertex b, Vertex c) {
         Segment p = new Segment(a, b);
-        Segment q = new Segment(a, c);
-        Segment r = new Segment(b, c);
         if (p.dist(c) < VERTEX_RADIUS + CORRIDOR_WIDTH) {
-            return true;
-        }
-        if (q.dist(b) < VERTEX_RADIUS + CORRIDOR_WIDTH) {
-            return true;
-        }
-        if (r.dist(a) < VERTEX_RADIUS + CORRIDOR_WIDTH) {
             return true;
         }
         return false;
@@ -161,17 +162,18 @@ public class Map {
                 edges.get(k).remove((Integer) j);
                 return check(indexes);
             }
+            return check(indexes);
         }
         ArrayList<Vertex> list = new ArrayList<>();
         for (int i: indexes) {
             list.add(vertexes[i]);
         }
         Collections.sort(list, Vertex.compareX);
-        int mid = size / 2;
-        if (size < 12 && size != 8) {
+        int mid = list.size() / 2;
+        if (list.size() < 12 && list.size() != 8) {
             mid = 3;
         }
-        double division = (list.get(mid).x + list.get(mid + 1).x) / 2;
+        double division = (list.get(mid).x + list.get(mid - 1).x) / 2;
         ArrayList<Integer> left = new ArrayList<>();
         ArrayList<Integer> right = new ArrayList<>();
         for (int i: indexes) {
@@ -214,6 +216,9 @@ public class Map {
                 if (closest == -1 || center.dist(vertexes[i]) < center.dist(vertexes[closest])) {
                     closest = i;
                 }
+            }
+            if (closest == -1) {
+                return false;
             }
             unmarked.remove(closest);
             if (vertexes[closest].x < division) {

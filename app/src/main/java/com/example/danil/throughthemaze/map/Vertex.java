@@ -7,13 +7,7 @@ public class Vertex {
     public static Comparator<Vertex> compareX = new Comparator<Vertex>() {
         @Override
         public int compare(Vertex o1, Vertex o2) {
-            if (o1.x < o2.x) {
-                return 1;
-            }
-            if (o1.x > o2.x) {
-                return -1;
-            }
-            return 0;
+            return Double.compare(o2.x, o1.x);
         }
     };
 

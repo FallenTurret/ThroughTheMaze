@@ -20,7 +20,7 @@ public class Segment {
             return b.dist(c);
         }
         double coefficient = scalar1 / scalar2;
-        return c.dist(new Vertex(a.x + coefficient * (c.x - a.x), a.y + coefficient * (c.y - a.y)));
+        return c.dist(new Vertex(a.x + coefficient * (b.x - a.x), a.y + coefficient * (b.y - a.y)));
     }
 
     public int side(Vertex c) {
