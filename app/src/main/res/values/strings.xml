@@ -1,4 +1,8 @@
 <resources>
     <string name="app_name">Through the maze</string>
     <string name="singleplayer">Singleplayer</string>
+
+    <string name="title_activity_game_cycle">GameCycleActivity</string>
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">DUMMY\nCONTENT</string>
 </resources>

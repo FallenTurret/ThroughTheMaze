@@ -25,16 +25,16 @@ public class MapDBManager {
         try (Cursor cursor = database.rawQuery("SELECT * FROM Vertexes" + mapId, null)) {
             map = new Map(cursor.getCount());
             while (cursor.moveToNext()) {
-                int id = cursor.getInt(1);
-                double x = cursor.getDouble(2);
-                double y = cursor.getDouble(3);
+                int id = cursor.getInt(0);
+                double x = cursor.getDouble(1);
+                double y = cursor.getDouble(2);
                 map.vertexes[id] = new Vertex(x, y);
             }
         }
         try (Cursor cursor = database.rawQuery("SELECT * FROM Edges" + mapId, null)) {
             while (cursor.moveToNext()) {
-                int i = cursor.getInt(1);
-                int j = cursor.getInt(2);
+                int i = cursor.getInt(0);
+                int j = cursor.getInt(1);
                 map.edges.get(i).add(j);
             }
         }
@@ -42,10 +42,10 @@ public class MapDBManager {
     }
 
     public int getMapCount() {
-        String query = "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE_TABLE'";
+        String query = "SELECT * FROM sqlite_master WHERE type='table'" +
+                "AND name != 'android_metadata' AND name != 'sqlite_sequence'";
         try (Cursor cursor = database.rawQuery(query, null)) {
-            cursor.moveToFirst();
-            return cursor.getInt(1) / 2;
+            return cursor.getCount() / 2;
         }
     }
 

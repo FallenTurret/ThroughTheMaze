@@ -27,4 +27,5 @@ public class Vertex {
     public Vertex midTo(Vertex other) {
         return new Vertex((x + other.x) / 2, (y + other.y) / 2);
     }
+
 }

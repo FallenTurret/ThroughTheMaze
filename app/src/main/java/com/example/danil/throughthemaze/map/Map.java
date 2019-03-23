@@ -3,9 +3,9 @@ package com.example.danil.throughthemaze.map;
 import java.util.*;
 
 public class Map {
-    private static final double VERTEX_RADIUS = 1;
-    private static final double CORRIDOR_WIDTH = VERTEX_RADIUS / 2;
-    private static final double BORDER = 1000;
+    public static final double VERTEX_RADIUS = 1;
+    public static final double CORRIDOR_WIDTH = VERTEX_RADIUS / 2;
+    public static final double BORDER = 1000;
     public int size;
     public Vertex[] vertexes;
     public ArrayList<LinkedList<Integer>> edges;

@@ -32,7 +32,7 @@ public class MapDBHandler extends SQLiteOpenHelper {
     }
 
     private void installDatabaseFromAssets() {
-        try (InputStream in = context.getAssets().open("$ASSETS_PATH/$DATABASE_NAME.sqlite3")) {
+        try (InputStream in = context.getAssets().open(ASSETS_PATH + "/" + DATABASE_NAME + ".sqlite3")) {
             File output = new File(context.getDatabasePath(DATABASE_NAME).getPath());
             try (OutputStream out = new FileOutputStream(output)) {
                 byte[] buf = new byte[1024];
@@ -42,7 +42,7 @@ public class MapDBHandler extends SQLiteOpenHelper {
                 }
             }
         } catch (IOException e) {
-            throw new RuntimeException("The $DATABASE_NAME couldn't be installed", e);
+            throw new RuntimeException("The " + DATABASE_NAME + " couldn't be installed", e);
         }
     }
 
@@ -61,7 +61,7 @@ public class MapDBHandler extends SQLiteOpenHelper {
 
     @Override
     public SQLiteDatabase getWritableDatabase() {
-        throw new RuntimeException("The $DATABASE_NAME database is not writable");
+        throw new RuntimeException("The " + DATABASE_NAME + " database is not writable");
     }
 
     @Override
