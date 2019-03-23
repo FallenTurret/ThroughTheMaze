@@ -14,12 +14,14 @@ public class Draw2D extends View {
 
     private Map map;
     private Paint paint = new Paint();
+    private int end;
     public double x;
     public double y;
 
-    public Draw2D(Context context, Map map) {
+    public Draw2D(Context context, Map map, int end) {
         super(context);
         this.map = map;
+        this.end = end;
     }
 
     @Override
@@ -65,6 +67,9 @@ public class Draw2D extends View {
         }
         paint.setColor(Color.RED);
         canvas.drawCircle(0, 0, (float)(Map.CORRIDOR_WIDTH / 2), paint);
+        paint.setColor(Color.BLUE);
+        canvas.drawCircle((float)(map.vertexes[end].x - x), (float)(map.vertexes[end].y - y),
+                (float)Map.VERTEX_RADIUS, paint);
         canvas.restore();
     }
 }

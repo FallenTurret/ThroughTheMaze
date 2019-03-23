@@ -22,6 +22,8 @@
                 android:label="@string/title_activity_game_cycle"
                 android:theme="@style/FullscreenTheme">
         </activity>
+        <activity android:name=".AccelerometerService">
+        </activity>
     </application>
 
 </manifest>
