@@ -1,5 +1,6 @@
 package com.example.danil.throughthemaze.view;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -72,4 +73,5 @@ public class Draw2D extends View {
                 (float)Map.VERTEX_RADIUS, paint);
         canvas.restore();
     }
+
 }

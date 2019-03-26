@@ -48,10 +48,12 @@ public class AccelerometerService extends Service {
             public void run() {
                 ball.ax = ax;
                 ball.ay = ay;
+                Intent intent = new Intent(Service.INPUT_SERVICE);
                 intent.putExtra(Ball.class.getName(), ball);
+                sendBroadcast(intent);
             }
         };
-        timer.schedule(task, 0, 400);
+        timer.schedule(task, 0, SensorManager.SENSOR_DELAY_GAME);
         return START_STICKY;
     }
 
