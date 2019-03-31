@@ -1,6 +1,5 @@
 package com.example.danil.throughthemaze.view;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -32,8 +31,8 @@ public class Draw2D extends View {
         paint.setColor(Color.GREEN);
         canvas.drawPaint(paint);
         paint.setColor(Color.WHITE);
-        double width = canvas.getWidth();
-        double height = canvas.getHeight();
+        double width = getWidth();
+        double height = getHeight();
         width /= 2;
         height /= 2;
         canvas.save();
@@ -58,11 +57,10 @@ public class Draw2D extends View {
                 double by = b.y - y;
                 double angle = -Math.atan2(by - ay, bx - ax);
                 canvas.save();
+                canvas.translate((float)ax, (float)ay);
                 canvas.rotate((float)Math.toDegrees(angle));
-                double newx = ax * Math.cos(angle) - ay * Math.sin(angle);
-                double newy = ax * Math.sin(angle) + ay * Math.cos(angle) - Map.CORRIDOR_WIDTH;
-                canvas.drawRect((float)newx, (float)newy,
-                        (float)(newx + dist), (float)(newy + 2 * Map.CORRIDOR_WIDTH), paint);
+                canvas.drawRect(0, (float)(-Map.CORRIDOR_WIDTH),
+                        (float)(dist), (float)(Map.CORRIDOR_WIDTH), paint);
                 canvas.restore();
             }
         }

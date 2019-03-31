@@ -29,7 +29,7 @@ public class AccelerometerService extends Service {
         super.onStartCommand(intent, flags, startId);
         ball = intent.getParcelableExtra(Ball.class.getName());
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-        sensorAcceleration = sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION);
+        sensorAcceleration = sensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY);
         listener = new SensorEventListener() {
             @Override
             public void onSensorChanged(SensorEvent event) {
