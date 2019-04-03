@@ -8,13 +8,20 @@
         android:orientation="vertical"
         tools:context=".MainActivity">
 
-    <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:id="@+id/button" tools:text="Singleplayer"
-            android:background="@color/primary_text_material_dark"
-            android:textColor="@android:color/black" android:text="@string/singleplayer"
-            android:onClick="startSingleplayer"/>
+    <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center">
+        <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:id="@+id/button" tools:text="Singleplayer"
+                android:background="@color/primary_text_material_dark"
+                android:textColor="@android:color/black" android:text="@string/singleplayer"
+                android:onClick="startSingleplayer"
+                tools:layout_editor_absoluteY="0dp" tools:layout_editor_absoluteX="0dp"/>
+    </LinearLayout>
 
 </android.support.constraint.ConstraintLayout>

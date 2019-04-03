@@ -1,6 +1,5 @@
 package com.example.danil.throughthemaze.map;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 
 public class Vertex {
@@ -13,7 +12,6 @@ public class Vertex {
 
     public double x;
     public double y;
-    public ArrayList<Vertex> adjacentVertexes = new ArrayList<>();
 
     public Vertex(double x, double y) {
         this.x = x;

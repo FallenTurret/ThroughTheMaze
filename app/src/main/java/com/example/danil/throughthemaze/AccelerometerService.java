@@ -33,8 +33,8 @@ public class AccelerometerService extends Service {
         listener = new SensorEventListener() {
             @Override
             public void onSensorChanged(SensorEvent event) {
-                ax = event.values[0];
-                ay = event.values[1];
+                ax = -event.values[0] * 5;
+                ay = event.values[1] * 5;
             }
 
             @Override
@@ -48,7 +48,7 @@ public class AccelerometerService extends Service {
             public void run() {
                 ball.ax = ax;
                 ball.ay = ay;
-                Intent intent = new Intent(Service.INPUT_SERVICE);
+                Intent intent = new Intent(Service.SENSOR_SERVICE);
                 intent.putExtra(Ball.class.getName(), ball);
                 sendBroadcast(intent);
             }
@@ -64,6 +64,7 @@ public class AccelerometerService extends Service {
         timer.cancel();
     }
 
+    @org.jetbrains.annotations.Nullable
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {

@@ -55,7 +55,7 @@ public class Draw2D extends View {
                 double ay = a.y - y;
                 double bx = b.x - x;
                 double by = b.y - y;
-                double angle = -Math.atan2(by - ay, bx - ax);
+                double angle = Math.atan2(by - ay, bx - ax);
                 canvas.save();
                 canvas.translate((float)ax, (float)ay);
                 canvas.rotate((float)Math.toDegrees(angle));

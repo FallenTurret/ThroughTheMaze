@@ -5,17 +5,17 @@ import java.util.*;
 public class Map {
     public static final double VERTEX_RADIUS = 1;
     public static final double CORRIDOR_WIDTH = VERTEX_RADIUS / 2;
-    public static final double BORDER = 1000;
+    public static final double BORDER = 200;
     public int size;
     public Vertex[] vertexes;
-    public ArrayList<LinkedList<Integer>> edges;
+    public ArrayList<TreeSet<Integer>> edges;
 
     public Map(int size) {
         this.size = size;
         vertexes = new Vertex[size];
         edges = new ArrayList<>();
         for (int i = 0; i < size; i++) {
-            edges.add(new LinkedList<Integer>());
+            edges.add(new TreeSet<Integer>());
         }
     }
 
@@ -104,10 +104,12 @@ public class Map {
 
     private void removeIntersections(Vertex a, Vertex b, ArrayList<Integer> indexes) {
         for (int i: indexes) {
-            LinkedList<Integer> newEdges = new LinkedList<>();
+            TreeSet<Integer> newEdges = new TreeSet<>();
             for (int j: edges.get(i)) {
                 if (!intersects(a, b, vertexes[i], vertexes[j])) {
                     newEdges.add(j);
+                } else {
+                    edges.get(j).remove(i);
                 }
             }
             edges.set(i, newEdges);
@@ -115,6 +117,9 @@ public class Map {
     }
 
     private boolean triangulate(ArrayList<Integer> indexes) {
+        if (indexes.size() <= 2) {
+            return false;
+        }
         if (indexes.size() <= 4) {
             for (int i = 0; i < indexes.size(); i++) {
                 for (int j = i + 1; j < indexes.size(); j++) {
@@ -138,22 +143,22 @@ public class Map {
                 if (i == 3) {
                     k = 1;
                 }
-                Vertex a = vertexes[indexes.get(0)];
-                Vertex b = vertexes[indexes.get(i)];
-                Vertex c = vertexes[indexes.get(j)];
-                Vertex d = vertexes[indexes.get(k)];
-                if (!intersects(a, b, c, d)) {
+                int a = indexes.get(0);
+                int b = indexes.get(i);
+                int c = indexes.get(j);
+                int d = indexes.get(k);
+                if (!intersects(vertexes[a], vertexes[b], vertexes[c], vertexes[d])) {
                     continue;
                 }
-                edges.get(0).remove((Integer) i);
-                edges.get(i).remove((Integer) 0);
+                edges.get(a).remove(b);
+                edges.get(b).remove(a);
                 if (check(indexes)) {
                     return true;
                 }
-                edges.get(0).add(i);
-                edges.get(i).add(0);
-                edges.get(j).remove((Integer) k);
-                edges.get(k).remove((Integer) j);
+                edges.get(a).add(b);
+                edges.get(b).add(a);
+                edges.get(c).remove(d);
+                edges.get(d).remove(c);
                 return check(indexes);
             }
             return check(indexes);

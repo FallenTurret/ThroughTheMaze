@@ -26,6 +26,15 @@ public class Ball implements Parcelable {
         color = Color.RED;
     }
 
+    public Ball(Ball other) {
+        x = other.x;
+        y = other.y;
+        vx = other.vx;
+        vy = other.vy;
+        ax = other.ax;
+        ay = other.ay;
+    }
+
     public Ball(Parcel in) {
         byte[] data = new byte[SIZE];
         in.readByteArray(data);

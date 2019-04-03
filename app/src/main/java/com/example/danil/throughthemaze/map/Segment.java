@@ -5,7 +5,7 @@ public class Segment {
     public Vertex a;
     public Vertex b;
 
-    Segment(Vertex a, Vertex b) {
+    public Segment(Vertex a, Vertex b) {
         this.a = a;
         this.b = b;
     }
@@ -29,5 +29,12 @@ public class Segment {
             return 1;
         }
         return 0;
+    }
+
+    public Segment move(double delta) {
+        Vertex v = new Vertex(a.y - b.y, b.x - a.x);
+        v.x *= delta / a.dist(b);
+        v.y *= delta / a.dist(b);
+        return new Segment(new Vertex(a.x + v.x, a.y + v.y), new Vertex(b.x + v.x, b.y + v.y));
     }
 }
