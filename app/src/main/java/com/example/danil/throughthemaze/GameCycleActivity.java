@@ -38,13 +38,9 @@ public class GameCycleActivity extends AppCompatActivity {
         int mapId = random.nextInt(mapCount);
         Map map = manager.loadMap(mapId);
         db.close();
-        int start = random.nextInt(map.size);
-        int end = -1;
-        while (end == -1 || end == start) {
-            end = random.nextInt(map.size);
-        }
-        double x = map.vertexes[start].x;
-        double y = map.vertexes[start].y;
+        map.pickStartAndEnd();
+        double x = map.vertexes[map.start].x;
+        double y = map.vertexes[map.start].y;
         ball = new Ball(x, y);
         accelerometer = new Intent(this, AccelerometerService.class);
         accelerometer.putExtra(Ball.class.getName(), ball);
@@ -53,7 +49,7 @@ public class GameCycleActivity extends AppCompatActivity {
         Intent intent = new Intent(this, PhysicsEngine.class);
         intent.putExtra(Ball.class.getName(), ball);
         bindService(intent, connection, Context.BIND_AUTO_CREATE);
-        draw = new Draw2D(this, map, end);
+        draw = new Draw2D(this, map);
         draw.x = x;
         draw.y = y;
         setContentView(draw);
@@ -104,6 +100,9 @@ public class GameCycleActivity extends AppCompatActivity {
 
                 if (bound) {
                     Ball newBall = engine.getBall();
+                    if (newBall.color == -1) {
+                        finish();
+                    }
                     ball.x = newBall.x;
                     ball.y = newBall.y;
                     ball.vx = newBall.vx;

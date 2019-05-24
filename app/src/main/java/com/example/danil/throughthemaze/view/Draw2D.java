@@ -5,6 +5,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.view.View;
+import com.example.danil.throughthemaze.gameplay.Ball;
 import com.example.danil.throughthemaze.map.Map;
 import com.example.danil.throughthemaze.map.Vertex;
 
@@ -14,14 +15,12 @@ public class Draw2D extends View {
 
     private Map map;
     private Paint paint = new Paint();
-    private int end;
     public double x;
     public double y;
 
-    public Draw2D(Context context, Map map, int end) {
+    public Draw2D(Context context, Map map) {
         super(context);
         this.map = map;
-        this.end = end;
     }
 
     @Override
@@ -30,7 +29,6 @@ public class Draw2D extends View {
         paint.setStyle(Paint.Style.FILL);
         paint.setColor(Color.GREEN);
         canvas.drawPaint(paint);
-        paint.setColor(Color.WHITE);
         double width = getWidth();
         double height = getHeight();
         width /= 2;
@@ -38,6 +36,7 @@ public class Draw2D extends View {
         canvas.save();
         canvas.translate((float)width, (float)height);
         canvas.scale((float)SCALE, (float)SCALE);
+        paint.setColor(Color.WHITE);
         for (Vertex v: map.vertexes) {
             double dx = v.x - x;
             double dy = v.y - y;
@@ -64,11 +63,11 @@ public class Draw2D extends View {
                 canvas.restore();
             }
         }
-        paint.setColor(Color.RED);
-        canvas.drawCircle(0, 0, (float)(Map.CORRIDOR_WIDTH / 2), paint);
         paint.setColor(Color.BLUE);
-        canvas.drawCircle((float)(map.vertexes[end].x - x), (float)(map.vertexes[end].y - y),
+        canvas.drawCircle((float)(map.vertexes[map.end].x - x), (float)(map.vertexes[map.end].y - y),
                 (float)Map.VERTEX_RADIUS, paint);
+        paint.setColor(Color.RED);
+        canvas.drawCircle(0, 0, (float)(Ball.RADIUS), paint);
         canvas.restore();
     }
 

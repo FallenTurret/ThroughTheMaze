@@ -3,11 +3,13 @@ package com.example.danil.throughthemaze.gameplay;
 import android.graphics.Color;
 import android.os.Parcel;
 import android.os.Parcelable;
+import com.example.danil.throughthemaze.map.Map;
 
 import java.nio.ByteBuffer;
 
 public class Ball implements Parcelable {
     private static final int SIZE = 52;
+    public static final double RADIUS = Map.CORRIDOR_WIDTH / 2;
     public double x;
     public double y;
     public double vx;
@@ -33,6 +35,7 @@ public class Ball implements Parcelable {
         vy = other.vy;
         ax = other.ax;
         ay = other.ay;
+        color = other.color;
     }
 
     public Ball(Parcel in) {

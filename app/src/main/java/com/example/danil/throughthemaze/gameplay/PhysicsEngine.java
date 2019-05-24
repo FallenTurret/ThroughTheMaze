@@ -34,6 +34,11 @@ public class PhysicsEngine extends Service {
         ball.vy *= 0.99;
         ball.vx += ball.ax * t;
         ball.vy += ball.ay * t;
+        Vertex curPoint = new Vertex(ball.x, ball.y);
+        Vertex end = new Vertex(map.vertexes[map.end].x, map.vertexes[map.end].y);
+        if (end.dist(curPoint) + Ball.RADIUS < Map.VERTEX_RADIUS) {
+            ball.color = -1;
+        }
         checkForClash();
     }
 

@@ -33,8 +33,8 @@ public class AccelerometerService extends Service {
         listener = new SensorEventListener() {
             @Override
             public void onSensorChanged(SensorEvent event) {
-                ax = -event.values[0] * 5;
-                ay = event.values[1] * 5;
+                ax = -event.values[0] * 20;
+                ay = event.values[1] * 20;
             }
 
             @Override

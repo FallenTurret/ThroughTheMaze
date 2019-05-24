@@ -9,6 +9,8 @@ public class Map {
     public int size;
     public Vertex[] vertexes;
     public ArrayList<TreeSet<Integer>> edges;
+    public int start;
+    public int end;
 
     public Map(int size) {
         this.size = size;
@@ -28,6 +30,7 @@ public class Map {
                 edges.get(i).clear();
             }
             if (triangulate(indexes) && check(indexes)) {
+                addSomeEdges();
                 break;
             }
         }
@@ -241,5 +244,53 @@ public class Map {
             }
         }
         return true;
+    }
+
+    void addSomeEdges() {
+        ArrayList<Integer> edgesToAdd = new ArrayList<>();
+        for (int i = 0; i < size; i++) {
+            for (int j = i + 1; j < size; j++) {
+                if (!edges.get(i).contains(j)) {
+                    edgesToAdd.add(i * size + j);
+                }
+            }
+        }
+        Collections.shuffle(edgesToAdd);
+        for (int e: edgesToAdd) {
+            int i = e / size;
+            int j = e % size;
+            boolean notIntersects = true;
+            for (int k = 0; k < size; k++) {
+                if (k == i || k == j) {
+                    continue;
+                }
+                if (intersects(vertexes[i], vertexes[j], vertexes[k])) {
+                    notIntersects = false;
+                    break;
+                }
+                for (int l: edges.get(k)) {
+                    if (l == i || l == j) {
+                        continue;
+                    }
+                    if (intersects(vertexes[i], vertexes[j], vertexes[k], vertexes[l])) {
+                        notIntersects = false;
+                        break;
+                    }
+                }
+            }
+            if (notIntersects) {
+                edges.get(i).add(j);
+                edges.get(j).add(i);
+            }
+        }
+    }
+
+    public void pickStartAndEnd() {
+        Random rnd = new Random();
+        start = rnd.nextInt(size);
+        end = -1;
+        while (end == -1 || end == start) {
+            end = rnd.nextInt(size);
+        }
     }
 }
