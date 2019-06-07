@@ -1,9 +1,9 @@
-package com.example.danil.throughthemaze.database;
+package ru.hse.throughthemaze.database;
 
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import com.example.danil.throughthemaze.map.Map;
-import com.example.danil.throughthemaze.map.Vertex;
+import ru.hse.throughthemaze.map.Map;
+import ru.hse.throughthemaze.map.Vertex;
 import org.sqlite.JDBC;
 
 import java.sql.*;

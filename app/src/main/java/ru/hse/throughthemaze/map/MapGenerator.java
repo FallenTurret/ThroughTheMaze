@@ -1,6 +1,6 @@
-package com.example.danil.throughthemaze.map;
+package ru.hse.throughthemaze.map;
 
-import com.example.danil.throughthemaze.database.MapDBManager;
+import ru.hse.throughthemaze.database.MapDBManager;
 
 import java.sql.SQLException;
 

@@ -1,22 +1,30 @@
-package com.example.danil.throughthemaze.view;
+package ru.hse.throughthemaze.view;
 
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.util.AttributeSet;
 import android.view.View;
-import com.example.danil.throughthemaze.gameplay.Ball;
-import com.example.danil.throughthemaze.map.Map;
-import com.example.danil.throughthemaze.map.Vertex;
+import ru.hse.throughthemaze.gameplay.Ball;
+import ru.hse.throughthemaze.map.Map;
+import ru.hse.throughthemaze.map.Vertex;
 
 public class Draw2D extends View {
+    public Draw2D(Context context) {
+        this(context, (AttributeSet)null);
+    }
+
+    public Draw2D(Context context, AttributeSet attrs) {
+        super(context, attrs, 0);
+    }
 
     private static final double SCALE = 20;
 
     private Map map;
     private Paint paint = new Paint();
-    public double x;
-    public double y;
+    public int index;
+    public Ball[] balls;
 
     public Draw2D(Context context, Map map) {
         super(context);
@@ -25,7 +33,12 @@ public class Draw2D extends View {
 
     @Override
     protected void onDraw(Canvas canvas) {
+        if (balls == null) {
+            return;
+        }
         super.onDraw(canvas);
+        double x = balls[index].x;
+        double y = balls[index].y;
         paint.setStyle(Paint.Style.FILL);
         paint.setColor(Color.GREEN);
         canvas.drawPaint(paint);
@@ -66,8 +79,10 @@ public class Draw2D extends View {
         paint.setColor(Color.BLUE);
         canvas.drawCircle((float)(map.vertexes[map.end].x - x), (float)(map.vertexes[map.end].y - y),
                 (float)Map.VERTEX_RADIUS, paint);
-        paint.setColor(Color.RED);
-        canvas.drawCircle(0, 0, (float)(Ball.RADIUS), paint);
+        for (Ball ball: balls) {
+            paint.setColor(ball.color);
+            canvas.drawCircle((float)(ball.x - x), (float)(ball.y - y), (float)Ball.RADIUS, paint);
+        }
         canvas.restore();
     }
 

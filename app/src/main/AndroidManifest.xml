@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="com.example.danil.throughthemaze">
+          package="ru.hse.throughthemaze">
 
     <application
             android:allowBackup="true"
@@ -9,23 +9,21 @@
             android:roundIcon="@mipmap/ic_launcher_round"
             android:supportsRtl="true"
             android:theme="@style/AppTheme">
-        <activity android:name="com.example.danil.throughthemaze.MainActivity">
+        <meta-data android:name="com.google.android.gms.games.APP_ID"
+                   android:value="@string/app_id" />
+        <meta-data android:name="com.google.android.gms.version"
+                   android:value="@integer/google_play_services_version"/>
+        <activity android:name="ru.hse.throughthemaze.MainActivity"
+                  android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <activity
-                android:name="com.example.danil.throughthemaze.GameCycleActivity"
-                android:screenOrientation="portrait"
-                android:configChanges="orientation|keyboardHidden|screenSize"
-                android:label="@string/title_activity_game_cycle"
-                android:theme="@style/FullscreenTheme">
-        </activity>
-        <service android:name="com.example.danil.throughthemaze.AccelerometerService">
+        <service android:name="ru.hse.throughthemaze.AccelerometerService">
         </service>
-        <service android:name="com.example.danil.throughthemaze.gameplay.PhysicsEngine">
+        <service android:name="ru.hse.throughthemaze.gameplay.PhysicsEngine">
         </service>
     </application>
 

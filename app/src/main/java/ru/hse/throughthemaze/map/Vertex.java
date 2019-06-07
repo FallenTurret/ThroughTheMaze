@@ -1,4 +1,4 @@
-package com.example.danil.throughthemaze.map;
+package ru.hse.throughthemaze.map;
 
 import java.util.Comparator;
 

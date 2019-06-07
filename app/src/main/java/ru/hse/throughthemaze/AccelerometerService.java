@@ -1,4 +1,4 @@
-package com.example.danil.throughthemaze;
+package ru.hse.throughthemaze;
 
 import android.app.Service;
 import android.content.Intent;
@@ -8,7 +8,7 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
-import com.example.danil.throughthemaze.gameplay.Ball;
+import ru.hse.throughthemaze.gameplay.Ball;
 
 import java.util.Timer;
 import java.util.TimerTask;

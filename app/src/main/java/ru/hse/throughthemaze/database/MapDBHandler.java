@@ -1,4 +1,4 @@
-package com.example.danil.throughthemaze.database;
+package ru.hse.throughthemaze.database;
 
 import android.content.Context;
 import android.content.SharedPreferences;

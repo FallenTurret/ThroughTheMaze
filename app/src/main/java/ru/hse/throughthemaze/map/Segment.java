@@ -1,4 +1,4 @@
-package com.example.danil.throughthemaze.map;
+package ru.hse.throughthemaze.map;
 
 public class Segment {
     private static final double EPS = 1e-8;

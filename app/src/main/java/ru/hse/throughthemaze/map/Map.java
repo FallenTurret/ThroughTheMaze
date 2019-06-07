@@ -1,4 +1,4 @@
-package com.example.danil.throughthemaze.map;
+package ru.hse.throughthemaze.map;
 
 import java.util.*;
 
@@ -9,7 +9,7 @@ public class Map {
     public int size;
     public Vertex[] vertexes;
     public ArrayList<TreeSet<Integer>> edges;
-    public int start;
+    public int[] start;
     public int end;
 
     public Map(int size) {
@@ -246,7 +246,7 @@ public class Map {
         return true;
     }
 
-    void addSomeEdges() {
+    private void addSomeEdges() {
         ArrayList<Integer> edgesToAdd = new ArrayList<>();
         for (int i = 0; i < size; i++) {
             for (int j = i + 1; j < size; j++) {
@@ -285,12 +285,16 @@ public class Map {
         }
     }
 
-    public void pickStartAndEnd() {
-        Random rnd = new Random();
-        start = rnd.nextInt(size);
-        end = -1;
-        while (end == -1 || end == start) {
-            end = rnd.nextInt(size);
+    public void pickStartAndEnd(int n) {
+        ArrayList<Integer> starts = new ArrayList<>();
+        for (int i = 0; i <= n; i++) {
+            starts.add(i);
         }
+        Collections.shuffle(starts);
+        start = new int[n];
+        for (int i = 0; i < n; i++) {
+            start[i] = starts.get(i);
+        }
+        end = starts.get(n);
     }
 }
