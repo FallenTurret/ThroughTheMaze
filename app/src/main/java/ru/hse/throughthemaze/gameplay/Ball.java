@@ -78,18 +78,22 @@ public class Ball implements Parcelable {
         out.putDouble(ax);
         out.putDouble(ay);
         out.putInt(color);
-        return out.array();
+        out.flip();
+        byte[] bytes = new byte[out.remaining()];
+        out.get(bytes);
+        return bytes;
     }
 
     public void read(byte[] data) {
-        ByteBuffer wrapped = ByteBuffer.wrap(data);
-        x = wrapped.getDouble();
-        y = wrapped.getDouble();
-        vx = wrapped.getDouble();
-        vy = wrapped.getDouble();
-        ax = wrapped.getDouble();
-        ay = wrapped.getDouble();
-        color = wrapped.getInt();
+        ByteBuffer buffer = ByteBuffer.allocate(data.length).put(data);
+        buffer.flip();
+        x = buffer.getDouble();
+        y = buffer.getDouble();
+        vx = buffer.getDouble();
+        vy = buffer.getDouble();
+        ax = buffer.getDouble();
+        ay = buffer.getDouble();
+        color = buffer.getInt();
     }
 
     public static byte[] toByteArray(Ball[] balls) {
@@ -97,12 +101,16 @@ public class Ball implements Parcelable {
         for (Ball ball: balls) {
             buffer.put(ball.write());
         }
-        return buffer.array();
+        buffer.flip();
+        byte[] bytes = new byte[buffer.remaining()];
+        buffer.get(bytes);
+        return bytes;
     }
 
     public static Ball[] fromByteArray(byte[] array) {
-        ByteBuffer buffer = ByteBuffer.wrap(array);
-        Ball[] res = new Ball[buffer.capacity() / SIZE];
+        ByteBuffer buffer = ByteBuffer.allocate(array.length).put(array);
+        buffer.flip();
+        Ball[] res = new Ball[buffer.remaining() / SIZE];
         for (int i = 0; i < res.length; i++) {
             res[i] = new Ball();
             byte[] bytes = new byte[SIZE];

@@ -22,4 +22,5 @@
     <string name='match_error_locally_modified'>This match has locally-modified data.  This operation cannot be performed until the match is sent to the server.</string>
     <string name="sign_out">Sign out</string>
     <string name="game_title">Through the maze</string>
+    <string name="standings">standings</string>
 </resources>

@@ -53,7 +53,7 @@ public class AccelerometerService extends Service {
                 sendBroadcast(intent);
             }
         };
-        timer.schedule(task, 0, SensorManager.SENSOR_DELAY_GAME);
+        timer.schedule(task, 0, MainActivity.UPDATE_FREQUENCY);
         return START_STICKY;
     }
 

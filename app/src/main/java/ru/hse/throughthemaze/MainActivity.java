@@ -10,9 +10,8 @@ import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.KeyEvent;
-import android.view.View;
-import android.view.WindowManager;
+import android.view.*;
+import android.widget.LinearLayout;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -21,10 +20,7 @@ import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.games.*;
 import com.google.android.gms.games.multiplayer.Participant;
 import com.google.android.gms.games.multiplayer.realtime.*;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.*;
 import ru.hse.throughthemaze.database.MapDBHandler;
 import ru.hse.throughthemaze.database.MapDBManager;
 import ru.hse.throughthemaze.gameplay.Ball;
@@ -97,6 +93,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         // Since the state of the signed in user can change when the activity is not active
         // it is recommended to try and sign in silently from when the app resumes.
         signInSilently();
+
+        registerReceiver(accelerometerReceiver, new IntentFilter(Service.SENSOR_SERVICE));
     }
 
     @Override
@@ -286,6 +284,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onActivityResult(requestCode, resultCode, intent);
     }
 
+    @Override
+    protected void onPause() {
+        unregisterReceiver(accelerometerReceiver);
+
+        super.onPause();
+    }
+
     // Activity is going to the background. We have to leave the current room.
     @Override
     public void onStop() {
@@ -302,6 +307,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onStop();
     }
 
+    @Override
+    protected void onDestroy() {
+        if (bound) {
+            bound = false;
+            unbindService(connection);
+        }
+
+        super.onDestroy();
+    }
+
     // Handle back key to make sure we cleanly leave a game if we are in the middle of one
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent e) {
@@ -316,6 +331,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void leaveRoom() {
         Log.d(TAG, "Leaving room.");
         stopKeepingScreenOn();
+        if (bound) {
+            bound = false;
+            unbindService(connection);
+        }
+        winner = -1;
         if (mRoomId != null) {
             mRealTimeMultiplayerClient.leave(mRoomConfig, mRoomId)
                     .addOnCompleteListener(new OnCompleteListener<Void>() {
@@ -523,6 +543,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 return;
             }
             updateRoom(room);
+            mHostId = mParticipants.get(0).getParticipantId();
         }
 
         @Override
@@ -550,6 +571,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void updateRoom(Room room) {
         if (room != null) {
+            if (mCurScreen == R.id.screen_game && mParticipants.size() > room.getParticipants().size()) {
+                winner = -2;
+                leaveRoom();
+            }
             mParticipants = room.getParticipants();
         }
     }
@@ -581,21 +606,44 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     };
 
+
+
     public static final long UPDATE_FREQUENCY = 20;
     private PhysicsEngine engine;
-    private volatile boolean bound = false;
+    private SQLiteDatabase db;
+    private MapDBManager manager;
+    private volatile boolean bound;
     private Intent accelerometer;
-    private volatile int mapId = -1;
+    private Draw2D draw;
+    private volatile int mapId;
     private Map map;
-    private volatile int gameStage = 0;
-    private int arrayIndex = 0;
+    private int notReady;
+    private int curStage;
+    private volatile int arrayIndex;
     private Ball[] balls;
-    private int winner;
-    private final Object lock = new Object();
+    private volatile int winner;
+
+    private void resetVars() {
+        engine = null;
+        db = null;
+        manager = null;
+        bound = false;
+        accelerometer = null;
+        draw = null;
+        mapId = -1;
+        map = null;
+        curStage = 0;
+        arrayIndex = -1;
+        balls = null;
+        winner = -1;
+    }
 
     private BroadcastReceiver accelerometerReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
+            if (balls == null) {
+                return;
+            }
             Ball ball = intent.getParcelableExtra(Ball.class.getName());
             synchronized (balls[arrayIndex]) {
                 balls[arrayIndex].ax = ball.ax;
@@ -607,154 +655,155 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     // Start the gameplay phase of the game.
     private void startGame(boolean multiplayer) {
-        switchToScreen(R.id.screen_game);
-        mHostId = mMyId;
+        resetVars();
+        int index = 0;
         for (Participant p: mParticipants) {
-            if (p.getParticipantId().compareTo(mHostId) < 0) {
-                mHostId = p.getParticipantId();
+            if (p.getParticipantId().equals(mMyId)) {
+                arrayIndex = index;
             }
-            if (p.getParticipantId().compareTo(mMyId) < 0) {
-                arrayIndex++;
-            }
+            index++;
         }
 
-        MapDBHandler dbLoader = new MapDBHandler(this);
-        SQLiteDatabase db = dbLoader.getReadableDatabase();
-        MapDBManager manager = new MapDBManager(db);
-        Log.d(TAG, "rofl");
-        if (mHostId.equals(mMyId)) {
-            int mapCount = manager.getMapCount();
-            Random random = new Random();
-            mapId = random.nextInt(mapCount);
+        curStage = 0;
 
-            ByteBuffer buffer = ByteBuffer.allocate(4).putInt(mapId);
-            buffer.flip();
-            byte[] bytes = new byte[4];
-            buffer.get(bytes);
-
-            for (Participant p: mParticipants) {
-                if (p.getStatus() == Participant.STATUS_JOINED && !p.getParticipantId().equals(mMyId)) {
-                    Log.d(TAG, "sending rofl");
-                    mRealTimeMultiplayerClient.sendReliableMessage(bytes, mRoomId, p.getParticipantId(), reliable);
-                }
-            }
-            gameStage = 1;
-        }
-
-
-        if (!mHostId.equals(mMyId)) {
-            synchronized (lock) {
-                while (gameStage == 0) {
-                    try {
-                        lock.wait();
-                    } catch (InterruptedException ignored) {
-                    }
-                }
-            }
-        }
-
-        map = manager.loadMap(mapId);
-        db.close();
-        if (mHostId.equals(mMyId)) {
-            map.pickStartAndEnd(mParticipants.size());
-            ByteBuffer buffer = ByteBuffer.allocate((mParticipants.size() + 1) * 4);
-            for (int i = 0; i < mParticipants.size(); i++) {
-                buffer.putInt(map.start[i]);
-            }
-            buffer.putInt(map.end);
-
-            buffer.flip();
-
-            byte[] array = new byte[buffer.remaining()];
-            buffer.get(array);
-            for (Participant p: mParticipants) {
-                if (p.getStatus() == Participant.STATUS_JOINED && !p.getParticipantId().equals(mMyId)) {
-                    mRealTimeMultiplayerClient.sendReliableMessage(array, mRoomId, p.getParticipantId(), reliable).addOnFailureListener(new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull Exception e) {
-                            Log.d(TAG, e.getMessage());
-                        }
-                    });
-                }
-            }
-
-            balls = new Ball[map.start.length];
-            for (int i = 0; i < map.start.length; i++) {
-                balls[i] = new Ball(map.vertexes[map.start[i]].x, map.vertexes[map.start[i]].y);
-            }
-
-            PhysicsEngine.map = map;
-            Intent intent = new Intent(this, PhysicsEngine.class);
-            intent.putExtra(Balls.class.getName(), new Balls(balls));
-            bindService(intent, connection, Context.BIND_AUTO_CREATE);
-            GameCycleThread server = new GameCycleThread();
-            server.start();
-            gameStage = 2;
-        }
-
-        if (!mHostId.equals(mMyId)) {
-            synchronized (lock) {
-                while (gameStage == 1) {
-                    try {
-                        lock.wait();
-                    } catch (InterruptedException ignored) {
-                    }
-                }
-            }
-        }
-
-        accelerometer = new Intent(this, AccelerometerService.class);
-        accelerometer.putExtra(Ball.class.getName(), balls[arrayIndex]);
-        startService(accelerometer);
-        registerReceiver(accelerometerReceiver, new IntentFilter(Service.SENSOR_SERVICE));
-        Draw2D draw = new Draw2D(this, map);
-        draw.balls = balls;
-
-        while (gameStage == 2) {
-            long time = System.currentTimeMillis();
-
-            draw.balls = balls;
-            draw.invalidate();
-
-            if (!mHostId.equals(mMyId)) {
-                byte[] bytes = new byte[Ball.SIZE + 4];
-                ByteBuffer buffer = ByteBuffer.allocate(Ball.SIZE + 4).putInt(arrayIndex).put(balls[arrayIndex].write());
-                buffer.flip();
-                buffer.get(bytes);
-                synchronized (balls[arrayIndex]) {
-                    mRealTimeMultiplayerClient.sendUnreliableMessage(bytes, mRoomId, mHostId);
-                }
-            }
-
-            long cycleTime = System.currentTimeMillis() - time;
-            if (cycleTime < UPDATE_FREQUENCY) {
-                try {
-                    Thread.sleep(UPDATE_FREQUENCY - cycleTime);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-        switchToMainScreen();
+        gameStage(0);
     }
 
-    class GameCycleThread implements Runnable {
+    private void gameStage(int stage) {
+        if (stage == 0) {
+            ((LinearLayout)findViewById(R.id.screen_game)).removeAllViews();
+            switchToScreen(R.id.screen_game);
+            if (mHostId.equals(mMyId)) {
+                MapDBHandler dbLoader = new MapDBHandler(this);
+                db = dbLoader.getReadableDatabase();
+                manager = new MapDBManager(db);
+                int mapCount = manager.getMapCount();
+                Random random = new Random();
+                mapId = random.nextInt(mapCount);
 
-        private AtomicBoolean running = new AtomicBoolean(false);
+                ByteBuffer buffer = ByteBuffer.allocate(4).putInt(mapId);
+                buffer.flip();
+                byte[] bytes = new byte[4];
+                buffer.get(bytes);
+
+                sendReliableMessageToOthers(bytes);
+                gameStage(++curStage);
+            }
+        } else if (stage == 1) {
+            if (!mHostId.equals(mMyId)) {
+                MapDBHandler dbLoader = new MapDBHandler(this);
+                db = dbLoader.getReadableDatabase();
+                manager = new MapDBManager(db);
+            }
+            map = manager.loadMap(mapId);
+            db.close();
+            map.start = new int[mParticipants.size()];
+            if (mHostId.equals(mMyId)) {
+                map.pickStartAndEnd(mParticipants.size());
+
+                notReady = mParticipants.size() - 1;
+
+                ByteBuffer buffer = ByteBuffer.allocate((mParticipants.size() + 1) * 4);
+                for (int i = 0; i < mParticipants.size(); i++) {
+                    buffer.putInt(map.start[i]);
+                }
+                buffer.putInt(map.end);
+
+                buffer.flip();
+
+                byte[] array = new byte[buffer.remaining()];
+                buffer.get(array);
+                sendReliableMessageToOthers(array);
+
+                balls = new Ball[map.start.length];
+                for (int i = 0; i < map.start.length; i++) {
+                    balls[i] = new Ball(map.vertexes[map.start[i]].x, map.vertexes[map.start[i]].y);
+                }
+            }
+        } else if (stage == 2) {
+            if (mHostId.equals(mMyId)) {
+                GameCycleThread server = new GameCycleThread();
+                server.start();
+            }
+            accelerometer = new Intent(this, AccelerometerService.class);
+            accelerometer.putExtra(Ball.class.getName(), balls[arrayIndex]);
+            startService(accelerometer);
+            ViewThread view = new ViewThread();
+            view.start();
+        }
+    }
+
+    class ViewThread implements Runnable {
+
+        private void start() {
+            draw = new Draw2D(MainActivity.this);
+            draw.map = map;
+            draw.balls = balls;
+            draw.index = arrayIndex;
+            ((LinearLayout)findViewById(R.id.screen_game)).addView(draw);
+            Thread worker = new Thread(this);
+            worker.start();
+        }
+
+        @Override
+        public void run() {
+            while (winner == -1) {
+                long time = System.currentTimeMillis();
+
+                if (draw == null) {
+                    break;
+                }
+
+                for (int i = 0; i < balls.length; i++) {
+                    synchronized (balls[i]) {
+                        draw.balls[i] = new Ball(balls[i]);
+                    }
+                }
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (draw != null) {
+                            draw.invalidate();
+                        }
+                    }
+                });
+
+                if (!mHostId.equals(mMyId)) {
+                    byte[] bytes = new byte[Ball.SIZE + 4];
+                    ByteBuffer buffer = ByteBuffer.allocate(Ball.SIZE + 4).putInt(arrayIndex);
+                    byte[] ballBytes;
+                    synchronized (balls[arrayIndex]) {
+                        ballBytes = balls[arrayIndex].write();
+                    }
+                    buffer.put(ballBytes);
+                    buffer.flip();
+                    buffer.get(bytes);
+                    mRealTimeMultiplayerClient.sendUnreliableMessage(bytes, mRoomId, mHostId);
+                }
+
+                long cycleTime = System.currentTimeMillis() - time;
+                if (cycleTime < UPDATE_FREQUENCY) {
+                    try {
+                        Thread.sleep(UPDATE_FREQUENCY - cycleTime);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
+    }
+
+
+    class GameCycleThread implements Runnable {
 
         private void start() {
             Thread worker = new Thread(this);
             worker.start();
         }
 
-        private void stop() {
-            running.set(false);
-        }
-
         @Override
         public void run() {
-            running.set(true);
-            while (running.get()) {
+            while (winner == -1) {
                 long time = System.currentTimeMillis();
 
                 if (bound) {
@@ -763,23 +812,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         Ball ball = engine.getBall(i);
                         if (ball.color == -1) {
                             winner = i;
-                            gameStage = 3;
-                            for (Participant p: mParticipants) {
-                                if (p.getStatus() == Participant.STATUS_JOINED && !p.getParticipantId().equals(mMyId)) {
-                                    byte[] array = new byte[4];
-                                    ByteBuffer buffer = ByteBuffer.allocate(4).putInt(i);
-                                    buffer.flip();
-                                    buffer.get(array);
-                                    mRealTimeMultiplayerClient
-                                            .sendReliableMessage(array, mRoomId, p.getParticipantId(), reliable);
-                                }
-                            }
-                            stop();
+
+                            byte[] array = new byte[4];
+                            ByteBuffer buffer = ByteBuffer.allocate(4).putInt(i);
+                            buffer.flip();
+                            buffer.get(array);
+                            sendReliableMessageToOthers(array);
+                            return;
                         }
                         ballsEngine[i] = ball;
                     }
 
                     mRealTimeMultiplayerClient.sendUnreliableMessageToOthers(Ball.toByteArray(ballsEngine), mRoomId);
+
+                    synchronized (balls[arrayIndex]) {
+                        double ax = balls[arrayIndex].ax;
+                        double ay = balls[arrayIndex].ay;
+                        balls = ballsEngine;
+                        balls[arrayIndex].ax = ax;
+                        balls[arrayIndex].ay = ay;
+                        engine.updateBall(arrayIndex, balls[arrayIndex]);
+                    }
 
                 }
 
@@ -811,36 +864,51 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private OnRealTimeMessageReceivedListener mOnRealTimeMessageReceivedListener = new OnRealTimeMessageReceivedListener() {
         @Override
         public void onRealTimeMessageReceived(@NonNull RealTimeMessage realTimeMessage) {
-            Log.d(TAG, "something received");
+            if (winner != -1) {
+                return;
+            }
             ByteBuffer buffer = ByteBuffer.allocate(realTimeMessage.getMessageData().length);
             buffer.put(realTimeMessage.getMessageData());
             buffer.flip();
             if (realTimeMessage.isReliable()) {
-                if (gameStage == 0) {
+                if (curStage == 0) {
                     mapId = buffer.getInt();
-                    Log.d(TAG, "gamestage 1");
-                    synchronized (lock) {
-                        gameStage = 1;
-                        lock.notify();
+                    gameStage(++curStage);
+                } else if (curStage == 1) {
+                    if (!mHostId.equals(mMyId)) {
+                        if (buffer.remaining() > 1) {
+                            balls = new Ball[mParticipants.size()];
+                            for (int i = 0; i < map.start.length; i++) {
+                                map.start[i] = buffer.getInt();
+                                balls[i] = new Ball(map.vertexes[map.start[i]].x, map.vertexes[map.start[i]].y);
+                            }
+                            map.end = buffer.getInt();
+                            byte[] bytes = new byte[1];
+                            mRealTimeMultiplayerClient.sendReliableMessage(bytes, mRoomId, mHostId, reliable);
+                        } else {
+                            gameStage(++curStage);
+                        }
+                    } else {
+                        notReady--;
+                        if (notReady == 0) {
+                            PhysicsEngine.map = map;
+                            Intent intent = new Intent(MainActivity.this, PhysicsEngine.class);
+                            intent.putExtra(Balls.class.getName(), new Balls(balls));
+                            bindService(intent, connection, Context.BIND_AUTO_CREATE);
+                            byte[] bytes = new byte[1];
+                            sendReliableMessageToOthers(bytes);
+                            gameStage(++curStage);
+                        }
                     }
-                } else if (gameStage == 1) {
-                    for (int i = 0; i < mParticipants.size(); i++) {
-                        map.start[i] = buffer.getInt();
-                    }
-                    map.end = buffer.getInt();
-                    Log.d(TAG, "gamestage 2");
-                    synchronized (lock) {
-                        gameStage = 2;
-                        lock.notify();
-                    }
-                } else if (gameStage == 2) {
+                } else if (curStage == 2) {
                     if (mHostId.equals(mMyId)) {
-                        unbindService(connection);
+                        if (bound) {
+                            bound = false;
+                            unbindService(connection);
+                        }
                     }
-                    unregisterReceiver(accelerometerReceiver);
                     stopService(accelerometer);
                     winner = buffer.getInt();
-                    gameStage = 3;
                 }
             } else {
                 if (!mHostId.equals(mMyId)) {
@@ -857,11 +925,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     byte[] bytes = new byte[buffer.remaining()];
                     buffer.get(bytes);
                     ball.read(bytes);
-                    engine.updateBall(index, ball);
+                    if (engine != null) {
+                        engine.updateBall(index, ball);
+                    }
                 }
             }
         }
     };
+
+    private void sendReliableMessageToOthers(byte[] bytes) {
+        for (Participant p: mParticipants) {
+            if (p.getStatus() == Participant.STATUS_JOINED && !p.getParticipantId().equals(mMyId)) {
+                mRealTimeMultiplayerClient.sendReliableMessage(bytes, mRoomId, p.getParticipantId(), reliable);
+            }
+        }
+    }
 
     /*
      * UI SECTION. Methods that implement the game's UI.

@@ -291,7 +291,6 @@ public class Map {
             starts.add(i);
         }
         Collections.shuffle(starts);
-        start = new int[n];
         for (int i = 0; i < n; i++) {
             start[i] = starts.get(i);
         }

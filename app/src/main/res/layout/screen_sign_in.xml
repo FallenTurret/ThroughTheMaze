@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools"
+              android:id="@+id/screen_sign_in" style="@style/LLScreen" tools:showIn="@layout/activity_main">
+    <TextView style="@style/GameTitle"/>
+    <com.google.android.gms.common.SignInButton android:id="@+id/button_sign_in"
+                                                style="@style/SignInButton"/>
+</LinearLayout>

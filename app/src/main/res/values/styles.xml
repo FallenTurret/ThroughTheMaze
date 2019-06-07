@@ -1,12 +1,13 @@
 <resources>
 
-    <color name="AccentColor">#cc0000</color>
+    <color name="AccentColor">#FF9800</color>
     <color name="PopupColor">@color/AccentColor</color>
     <color name="PopupTextColor">#ffffff</color>
-    <color name="ButtonTextColor">#ffffff</color>
+    <color name="ButtonTextColor">#020101</color>
     <color name="BlurbColor">#a0a0a0</color>
     <color name="SignOutButtonBackground">#e0e0e0</color>
     <color name="SignOutButtonTextColor">#404040</color>
+    <color name="BackgroundColor">#4CAF50</color>
 
     <dimen name="TitleSize">30sp</dimen>
 

@@ -6,37 +6,39 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.util.AttributeSet;
 import android.view.View;
+import ru.hse.throughthemaze.R;
 import ru.hse.throughthemaze.gameplay.Ball;
 import ru.hse.throughthemaze.map.Map;
 import ru.hse.throughthemaze.map.Vertex;
 
 public class Draw2D extends View {
-    public Draw2D(Context context) {
-        this(context, (AttributeSet)null);
+
+    public Draw2D(Context context, AttributeSet attrs, int defStyle) {
+        super(context, attrs, defStyle);
     }
 
     public Draw2D(Context context, AttributeSet attrs) {
-        super(context, attrs, 0);
+        super(context, attrs);
+    }
+
+    public Draw2D(Context context) {
+        super(context);
     }
 
     private static final double SCALE = 20;
 
-    private Map map;
     private Paint paint = new Paint();
+    public Map map;
     public int index;
     public Ball[] balls;
 
-    public Draw2D(Context context, Map map) {
-        super(context);
-        this.map = map;
-    }
 
     @Override
     protected void onDraw(Canvas canvas) {
+        super.onDraw(canvas);
         if (balls == null) {
             return;
         }
-        super.onDraw(canvas);
         double x = balls[index].x;
         double y = balls[index].y;
         paint.setStyle(Paint.Style.FILL);

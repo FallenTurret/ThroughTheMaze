@@ -2,34 +2,42 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
              xmlns:tools="http://schemas.android.com/tools"
              android:layout_width="match_parent"
-             android:layout_height="match_parent" >
+             android:layout_height="match_parent" android:background="@color/BackgroundColor">
 
     <!-- SIGN-IN SCREEN -->
-    <LinearLayout android:id="@+id/screen_sign_in" style="@style/LLScreen">
-        <TextView style="@style/GameTitle" />
-        <com.google.android.gms.common.SignInButton android:id="@+id/button_sign_in"
-                                                    style="@style/SignInButton" />
-    </LinearLayout>
+    <include layout="@layout/table"/>
+    <include layout="@layout/screen_sign_in"/>
 
     <!-- MAIN SCREEN -->
-    <LinearLayout android:id="@+id/screen_main" style="@style/LLScreen">
-        <TextView style="@style/GameTitle" />
-        <Button android:id="@+id/button_multiplayer"
-                style="@style/MainScreenButton"
-                android:text="@string/multiplayer" />
-        <Button android:id="@+id/button_sign_out"
-                style="@style/SignOutButton"
-                android:text="@string/sign_out" />
-    </LinearLayout>
 
     <!-- "PLEASE WAIT" SCREEN -->
-    <LinearLayout android:id="@+id/screen_wait" style="@style/LLScreen">
-        <TextView style="@style/Blurb" android:text="@string/please_wait" />
+    <LinearLayout android:id="@+id/screen_wait" style="@style/LLScreen" android:background="@color/BackgroundColor">
+        <TextView style="@style/Blurb" android:text="@string/please_wait"/>
     </LinearLayout>
 
     <!-- GAMEPLAY SCREEN -->
-    <ru.hse.throughthemaze.view.Draw2D android:layout_height="wrap_content"
-                                       android:layout_width="wrap_content"
-                                       android:id="@+id/screen_game">
-    </ru.hse.throughthemaze.view.Draw2D>
+    <LinearLayout android:layout_height="wrap_content"
+                  android:layout_width="wrap_content"
+                  android:id="@+id/screen_game"
+                  android:orientation="vertical"/>
+    <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" android:gravity="center">
+        <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent" android:id="@+id/textView"
+                android:textAppearance="@style/TextAppearance.AppCompat.Headline"
+                android:textSize="30sp" android:textColor="@color/AccentColor"
+                android:textAllCaps="true" android:textStyle="bold" android:text="@string/standings"/>
+    </LinearLayout>
+    <LinearLayout android:id="@+id/screen_main" style="@style/LLScreen">
+        <TextView style="@style/GameTitle"/>
+        <Button android:id="@+id/button_multiplayer"
+                style="@style/MainScreenButton"
+                android:text="@string/multiplayer"/>
+        <Button android:id="@+id/button_sign_out"
+                style="@style/SignOutButton"
+                android:text="@string/sign_out"/>
+    </LinearLayout>
 </FrameLayout>
