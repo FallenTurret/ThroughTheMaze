@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.app.Service;
 import android.content.*;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Color;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
@@ -12,6 +13,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.*;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
@@ -28,12 +30,11 @@ import ru.hse.throughthemaze.gameplay.Balls;
 import ru.hse.throughthemaze.gameplay.PhysicsEngine;
 import ru.hse.throughthemaze.map.Map;
 import ru.hse.throughthemaze.view.Draw2D;
+import ru.hse.throughthemaze.view.Item;
+import ru.hse.throughthemaze.view.Standings;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.*;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
     private final static String TAG = "Through the maze";
@@ -116,6 +117,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.button_multiplayer:
                 // user wants to play against a random opponent right now
                 startQuickGame();
+                break;
+            case R.id.close_standings:
+                if (gamesLeft > 0) {
+                    startGame();
+                } else {
+                    leaveRoom();
+                }
                 break;
         }
     }
@@ -270,7 +278,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             if (resultCode == Activity.RESULT_OK) {
                 // ready to start playing
                 Log.d(TAG, "Starting game (waiting room returned OK).");
-                startGame(true);
+                startSession();
             } else if (resultCode == GamesActivityResultCodes.RESULT_LEFT_ROOM) {
                 // player indicated that they want to leave the room
                 leaveRoom();
@@ -571,7 +579,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void updateRoom(Room room) {
         if (room != null) {
-            if (mCurScreen == R.id.screen_game && mParticipants.size() > room.getParticipants().size()) {
+            if ((mCurScreen == R.id.screen_game || mCurScreen == R.id.game_end) &&
+                    mParticipants.size() > room.getParticipants().size()) {
                 winner = -2;
                 leaveRoom();
             }
@@ -609,6 +618,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 
     public static final long UPDATE_FREQUENCY = 20;
+    private static final int[] COLOR = {Color.RED, Color.BLUE, Color.YELLOW, Color.MAGENTA};
+    private static final String[] COLORNAMES = {"RED", "BLUE", "YELLOW", "PURPLE"};
+    private static final int GAMES = 5;
+    private int gamesLeft;
     private PhysicsEngine engine;
     private SQLiteDatabase db;
     private MapDBManager manager;
@@ -622,6 +635,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private volatile int arrayIndex;
     private Ball[] balls;
     private volatile int winner;
+    private int[] wins;
 
     private void resetVars() {
         engine = null;
@@ -633,7 +647,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mapId = -1;
         map = null;
         curStage = 0;
-        arrayIndex = -1;
         balls = null;
         winner = -1;
     }
@@ -654,8 +667,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 
     // Start the gameplay phase of the game.
-    private void startGame(boolean multiplayer) {
-        resetVars();
+    private void startSession() {
         int index = 0;
         for (Participant p: mParticipants) {
             if (p.getParticipantId().equals(mMyId)) {
@@ -663,9 +675,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
             index++;
         }
+        wins = new int[mParticipants.size()];
+        gamesLeft = GAMES;
+        startGame();
+    }
 
-        curStage = 0;
-
+    private void startGame() {
+        resetVars();
         gameStage(0);
     }
 
@@ -718,6 +734,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 balls = new Ball[map.start.length];
                 for (int i = 0; i < map.start.length; i++) {
                     balls[i] = new Ball(map.vertexes[map.start[i]].x, map.vertexes[map.start[i]].y);
+                    balls[i].color = COLOR[i];
                 }
             }
         } else if (stage == 2) {
@@ -790,6 +807,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     }
                 }
             }
+            gamesLeft--;
+            wins[winner]++;
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    showStandings();
+                }
+            });
         }
     }
 
@@ -950,13 +975,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private final static int[] CLICKABLES = {
             R.id.button_multiplayer,
             R.id.button_sign_in,
-            R.id.button_sign_out
+            R.id.button_sign_out,
+            R.id.close_standings
     };
 
     // This array lists all the individual screens our game has.
     private final static int[] SCREENS = {
             R.id.screen_game, R.id.screen_main, R.id.screen_sign_in,
-            R.id.screen_wait
+            R.id.screen_wait, R.id.game_end
     };
     private int mCurScreen = -1;
 
@@ -974,6 +1000,32 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         } else {
             switchToScreen(R.id.screen_sign_in);
         }
+    }
+
+    private void showStandings() {
+        List<Integer> indexes = new ArrayList<>();
+        for (int i = 0; i < mParticipants.size(); i++) {
+            indexes.add(i);
+        }
+        Collections.sort(indexes, new Comparator<Integer>() {
+            @Override
+            public int compare(Integer a, Integer b) {
+                return wins[b] - wins[a];
+            }
+        });
+
+        List<Item> list = new ArrayList<>();
+        ListView listView = findViewById(R.id.standings);
+        Standings standings = new Standings(this, list);
+        listView.setAdapter(standings);
+
+        for (int i: indexes) {
+            Item item = new Item(COLORNAMES[i], String.valueOf(wins[i]));
+            list.add(item);
+        }
+
+        standings.notifyDataSetChanged();
+        switchToScreen(R.id.game_end);
     }
 
     /*

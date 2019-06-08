@@ -23,4 +23,5 @@
     <string name="sign_out">Sign out</string>
     <string name="game_title">Through the maze</string>
     <string name="standings">standings</string>
+    <string name="close_standings">Continue</string>
 </resources>

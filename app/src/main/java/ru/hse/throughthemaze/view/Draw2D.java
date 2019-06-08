@@ -78,7 +78,7 @@ public class Draw2D extends View {
                 canvas.restore();
             }
         }
-        paint.setColor(Color.BLUE);
+        paint.setColor(Color.BLACK);
         canvas.drawCircle((float)(map.vertexes[map.end].x - x), (float)(map.vertexes[map.end].y - y),
                 (float)Map.VERTEX_RADIUS, paint);
         for (Ball ball: balls) {
