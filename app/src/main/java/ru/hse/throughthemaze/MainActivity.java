@@ -843,6 +843,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                             buffer.flip();
                             buffer.get(array);
                             sendReliableMessageToOthers(array);
+                            if (bound) {
+                                bound = false;
+                                unbindService(connection);
+                            }
                             return;
                         }
                         ballsEngine[i] = ball;
