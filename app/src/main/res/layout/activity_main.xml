@@ -23,6 +23,9 @@
     <LinearLayout
             android:id="@+id/screen_main" style="@style/LLScreen" tools:showIn="@layout/activity_main">
         <TextView style="@style/GameTitle"/>
+        <Button android:id="@+id/button_singleplayer"
+                android:text="@string/singleplayer"
+                style="@style/MainScreenButton"/>
         <Button android:id="@+id/button_multiplayer"
                 style="@style/MainScreenButton"
                 android:text="@string/multiplayer"/>

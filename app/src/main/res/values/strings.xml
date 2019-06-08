@@ -1,6 +1,5 @@
 <resources>
     <string name="app_name">Through the maze</string>
-    <string name="singleplayer">Singleplayer</string>
 
     <string name="title_activity_game_cycle">GameCycleActivity</string>
     <string name="dummy_button">Dummy Button</string>
@@ -24,4 +23,5 @@
     <string name="game_title">Through the maze</string>
     <string name="standings">standings</string>
     <string name="close_standings">Continue</string>
+    <string name="singleplayer">singleplayer</string>
 </resources>

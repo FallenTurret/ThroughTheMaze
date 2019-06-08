@@ -113,9 +113,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 signOut();
                 switchToScreen(R.id.screen_sign_in);
                 break;
-
+            case R.id.button_singleplayer:
+                mMultiplayer = false;
+                startGame();
+                break;
             case R.id.button_multiplayer:
                 // user wants to play against a random opponent right now
+                mMultiplayer = true;
                 startQuickGame();
                 break;
             case R.id.close_standings:
@@ -682,6 +686,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void startGame() {
         resetVars();
+        if (!mMultiplayer) {
+            gamesLeft = 1;
+        }
         gameStage(0);
     }
 
@@ -689,7 +696,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (stage == 0) {
             ((LinearLayout)findViewById(R.id.screen_game)).removeAllViews();
             switchToScreen(R.id.screen_game);
-            if (mHostId.equals(mMyId)) {
+            if (!mMultiplayer || mHostId.equals(mMyId)) {
                 MapDBHandler dbLoader = new MapDBHandler(this);
                 db = dbLoader.getReadableDatabase();
                 manager = new MapDBManager(db);
@@ -697,48 +704,70 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Random random = new Random();
                 mapId = random.nextInt(mapCount);
 
-                ByteBuffer buffer = ByteBuffer.allocate(4).putInt(mapId);
-                buffer.flip();
-                byte[] bytes = new byte[4];
-                buffer.get(bytes);
+                if (mMultiplayer) {
+                    ByteBuffer buffer = ByteBuffer.allocate(4).putInt(mapId);
+                    buffer.flip();
+                    byte[] bytes = new byte[4];
+                    buffer.get(bytes);
 
-                sendReliableMessageToOthers(bytes);
+                    sendReliableMessageToOthers(bytes);
+                }
+
                 gameStage(++curStage);
             }
         } else if (stage == 1) {
-            if (!mHostId.equals(mMyId)) {
+            if (!mMultiplayer || !mHostId.equals(mMyId)) {
                 MapDBHandler dbLoader = new MapDBHandler(this);
                 db = dbLoader.getReadableDatabase();
                 manager = new MapDBManager(db);
             }
             map = manager.loadMap(mapId);
             db.close();
-            map.start = new int[mParticipants.size()];
-            if (mHostId.equals(mMyId)) {
-                map.pickStartAndEnd(mParticipants.size());
+            if (mMultiplayer) {
+                map.start = new int[mParticipants.size()];
+            } else {
+                map.start = new int[1];
+            }
+            if (!mMultiplayer || mHostId.equals(mMyId)) {
 
-                notReady = mParticipants.size() - 1;
+                if (mMultiplayer) {
+                    map.pickStartAndEnd(mParticipants.size());
 
-                ByteBuffer buffer = ByteBuffer.allocate((mParticipants.size() + 1) * 4);
-                for (int i = 0; i < mParticipants.size(); i++) {
-                    buffer.putInt(map.start[i]);
+                    notReady = mParticipants.size() - 1;
+
+                    ByteBuffer buffer = ByteBuffer.allocate((mParticipants.size() + 1) * 4);
+                    for (int i = 0; i < mParticipants.size(); i++) {
+                        buffer.putInt(map.start[i]);
+                    }
+                    buffer.putInt(map.end);
+
+                    buffer.flip();
+
+                    byte[] array = new byte[buffer.remaining()];
+                    buffer.get(array);
+                    sendReliableMessageToOthers(array);
+                } else {
+                    map.pickStartAndEnd(1);
                 }
-                buffer.putInt(map.end);
-
-                buffer.flip();
-
-                byte[] array = new byte[buffer.remaining()];
-                buffer.get(array);
-                sendReliableMessageToOthers(array);
 
                 balls = new Ball[map.start.length];
                 for (int i = 0; i < map.start.length; i++) {
                     balls[i] = new Ball(map.vertexes[map.start[i]].x, map.vertexes[map.start[i]].y);
                     balls[i].color = COLOR[i];
                 }
+
+                if (!mMultiplayer) {
+                    gameStage(++curStage);
+                }
             }
         } else if (stage == 2) {
-            if (mHostId.equals(mMyId)) {
+            if (!mMultiplayer) {
+                PhysicsEngine.map = map;
+                Intent intent = new Intent(MainActivity.this, PhysicsEngine.class);
+                intent.putExtra(Balls.class.getName(), new Balls(balls));
+                bindService(intent, connection, Context.BIND_AUTO_CREATE);
+            }
+            if (!mMultiplayer || mHostId.equals(mMyId)) {
                 GameCycleThread server = new GameCycleThread();
                 server.start();
             }
@@ -785,7 +814,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     }
                 });
 
-                if (!mHostId.equals(mMyId)) {
+                if (mMultiplayer && !mHostId.equals(mMyId)) {
                     byte[] bytes = new byte[Ball.SIZE + 4];
                     ByteBuffer buffer = ByteBuffer.allocate(Ball.SIZE + 4).putInt(arrayIndex);
                     byte[] ballBytes;
@@ -808,6 +837,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
             }
             gamesLeft--;
+            if (!mMultiplayer) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        switchToMainScreen();
+                    }
+                });
+                return;
+            }
             wins[winner]++;
             runOnUiThread(new Runnable() {
                 @Override
@@ -832,17 +870,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 long time = System.currentTimeMillis();
 
                 if (bound) {
-                    Ball[] ballsEngine = new Ball[mParticipants.size()];
-                    for (int i = 0; i < mParticipants.size(); i++) {
+                    Ball[] ballsEngine = new Ball[map.start.length];
+                    for (int i = 0; i < map.start.length; i++) {
                         Ball ball = engine.getBall(i);
                         if (ball.color == -1) {
                             winner = i;
 
-                            byte[] array = new byte[4];
-                            ByteBuffer buffer = ByteBuffer.allocate(4).putInt(i);
-                            buffer.flip();
-                            buffer.get(array);
-                            sendReliableMessageToOthers(array);
+                            if (mMultiplayer) {
+                                byte[] array = new byte[4];
+                                ByteBuffer buffer = ByteBuffer.allocate(4).putInt(i);
+                                buffer.flip();
+                                buffer.get(array);
+                                sendReliableMessageToOthers(array);
+                            }
                             if (bound) {
                                 bound = false;
                                 unbindService(connection);
@@ -852,7 +892,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         ballsEngine[i] = ball;
                     }
 
-                    mRealTimeMultiplayerClient.sendUnreliableMessageToOthers(Ball.toByteArray(ballsEngine), mRoomId);
+                    if (mMultiplayer) {
+                        mRealTimeMultiplayerClient.sendUnreliableMessageToOthers(Ball.toByteArray(ballsEngine), mRoomId);
+                    }
 
                     synchronized (balls[arrayIndex]) {
                         double ax = balls[arrayIndex].ax;
@@ -977,6 +1019,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     // This array lists everything that's clickable, so we can install click
     // event handlers.
     private final static int[] CLICKABLES = {
+            R.id.button_singleplayer,
             R.id.button_multiplayer,
             R.id.button_sign_in,
             R.id.button_sign_out,
