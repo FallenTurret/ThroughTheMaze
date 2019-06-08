@@ -54,10 +54,11 @@ public class PhysicsEngine extends Service {
                     processClash(ball, balls[j]);
                 }
             }
+            boolean next = false;
             for (int i = 0; i < map.size; i++) {
                 Vertex v = map.vertexes[i];
                 if (v.dist(curPoint) < Map.VERTEX_RADIUS) {
-                    if (Map.VERTEX_RADIUS < Map.CORRIDOR_WIDTH / 2 + v.dist(curPoint)) {
+                    if (Map.VERTEX_RADIUS < Ball.RADIUS + v.dist(curPoint)) {
                         boolean inCorridor = false;
                         for (int j : map.edges.get(i)) {
                             Vertex a = map.vertexes[i];
@@ -79,8 +80,12 @@ public class PhysicsEngine extends Service {
                         Vertex onBorder = new Vertex(v.x + deltax, v.y + deltay);
                         processClash(new Segment(onBorder, new Vertex(onBorder.x - deltay, onBorder.y + deltax)), ball);
                     }
+                    next = true;
                     break;
                 }
+            }
+            if (next) {
+                continue;
             }
             for (int i = 0; i < map.size; i++) {
                 for (int j : map.edges.get(i)) {

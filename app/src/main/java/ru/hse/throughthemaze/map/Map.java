@@ -4,7 +4,7 @@ import java.util.*;
 
 public class Map {
     public static final double VERTEX_RADIUS = 1;
-    public static final double CORRIDOR_WIDTH = VERTEX_RADIUS / 2;
+    public static final double CORRIDOR_WIDTH = VERTEX_RADIUS / 4;
     public static final double BORDER = 200;
     public int size;
     public Vertex[] vertexes;
@@ -80,6 +80,9 @@ public class Map {
         for (int e: edgesToAdd) {
             int i = e / size;
             int j = e % size;
+            if ((edges.get(i).size() > 4 || edges.get(j).size() > 4) && !edges.get(i).isEmpty() && !edges.get(j).isEmpty()) {
+                continue;
+            }
             boolean notIntersects = true;
             for (int k = 0; k < size; k++) {
                 if (k == i || k == j) {

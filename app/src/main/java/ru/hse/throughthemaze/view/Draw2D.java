@@ -25,7 +25,7 @@ public class Draw2D extends View {
         super(context);
     }
 
-    private static final double SCALE = 20;
+    private static final double SCALE = 80;
 
     private Paint paint = new Paint();
     public Map map;
