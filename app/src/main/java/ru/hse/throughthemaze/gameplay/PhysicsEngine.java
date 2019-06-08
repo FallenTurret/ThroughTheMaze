@@ -124,7 +124,12 @@ public class PhysicsEngine extends Service {
     }
 
     private void processClash(Ball a, Ball b) {
-
+        double vx = a.vx;
+        double vy = a.vy;
+        a.vx = b.vx / 2;
+        a.vy = b.vy / 2;
+        b.vx = vx / 2;
+        b.vy = vy / 2;
     }
 
     public synchronized void updateBall(int i, Ball newBall) {
