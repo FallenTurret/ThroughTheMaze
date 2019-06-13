@@ -1,4 +1,4 @@
-package com.example.danil.throughthemaze;
+package ru.hse.throughthemaze;
 
 import org.junit.Test;
 
